@@ -1,5 +1,13 @@
 import * as React from "react";
 
+import { isDev } from "./constants.macro";
+import { warnAboutDeprecation } from "./utils";
+
+export * from "./onEvents";
+export * from "./ssrOnly";
+export * from "./whenIdle";
+export * from "./whenVisible";
+
 export type LazyProps = {
   ssrOnly?: boolean;
   whenIdle?: boolean;
@@ -43,13 +51,7 @@ const LazyHydrate: React.FunctionComponent<Props> = function(props) {
 
   const { ssrOnly, whenIdle, whenVisible, on = [], children, ...rest } = props;
 
-  if (
-    process.env.NODE_ENV !== "production" &&
-    !ssrOnly &&
-    !whenIdle &&
-    !whenVisible &&
-    !on.length
-  ) {
+  if (isDev && !ssrOnly && !whenIdle && !whenVisible && !on.length) {
     console.error(
       `LazyHydration: Enable atleast one trigger for hydration.\n` +
         `If you don't want to hydrate, use ssrOnly`
@@ -61,6 +63,11 @@ const LazyHydrate: React.FunctionComponent<Props> = function(props) {
     if (!childRef.current.hasChildNodes()) {
       setHydrated(true);
     }
+  }, []);
+
+  React.useEffect(() => {
+    warnAboutDeprecation({ on, ssrOnly, whenIdle, whenVisible });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   React.useEffect(() => {
