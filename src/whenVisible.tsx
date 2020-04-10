@@ -1,15 +1,33 @@
 import * as React from "react";
 
+import { isBrowser } from "./constants.macro";
 import { defaultStyle, useHydrationState } from "./utils";
 
 type Props = Omit<
   React.HTMLProps<HTMLDivElement>,
   "dangerouslySetInnerHTML"
 > & {
-  observerOptions?: IntersectionObserverInit;
+  /**
+   * Use a custom IntersectionObserver instance
+   */
+  observer?: IntersectionObserver;
 };
 
-function HydrateWhenVisible({ children, observerOptions, ...rest }: Props) {
+const hydrationEvent = "hydrate";
+
+const observerInstance =
+  isBrowser && IntersectionObserver
+    ? new IntersectionObserver(entries => {
+        for (let i = 0; i < entries.length; i++) {
+          const entry = entries[i];
+          if (entry.isIntersecting || entry.intersectionRatio > 0) {
+            hydrateComponent(entry);
+          }
+        }
+      })
+    : null;
+
+function HydrateWhenVisible({ children, observer, ...rest }: Props) {
   const [childRef, hydrated, hydrate] = useHydrationState();
 
   React.useEffect(() => {
@@ -23,18 +41,7 @@ function HydrateWhenVisible({ children, observerOptions, ...rest }: Props) {
       }
     }
 
-    const io = IntersectionObserver
-      ? new IntersectionObserver(entries => {
-          // As only one element is observed,
-          // there is no need to loop over the array
-          if (entries.length) {
-            const entry = entries[0];
-            if (entry.isIntersecting || entry.intersectionRatio > 0) {
-              hydrate();
-            }
-          }
-        }, observerOptions)
-      : null;
+    const io = observer || observerInstance;
 
     if (io && childRef.current.childElementCount) {
       // As root node does not have any box model, it cannot intersect.
@@ -45,11 +52,23 @@ function HydrateWhenVisible({ children, observerOptions, ...rest }: Props) {
         io.unobserve(el);
       });
 
+      childRef.current.addEventListener(hydrationEvent, hydrate, {
+        once: true,
+        capture: true,
+        passive: true
+      });
+
+      cleanupFns.push(() => {
+        childRef.current.removeEventListener(hydrationEvent, hydrate, {
+          capture: true
+        });
+      });
+
       return cleanup;
     } else {
       hydrate();
     }
-  }, [hydrated, hydrate, childRef, observerOptions]);
+  }, [hydrated, hydrate, childRef, observer]);
 
   if (hydrated) {
     return (
@@ -70,4 +89,8 @@ function HydrateWhenVisible({ children, observerOptions, ...rest }: Props) {
   }
 }
 
-export { HydrateWhenVisible };
+function hydrateComponent(entry: IntersectionObserverEntry) {
+  entry.target.dispatchEvent(new CustomEvent(hydrationEvent));
+}
+
+export { HydrateWhenVisible, hydrateComponent };
