@@ -3,23 +3,19 @@
   "version": "0.0.11",
   "description": "Lazy Hydration for Server Rendered React Components",
   "source": "./src/index.tsx",
-  "main": "./dist/index.js",
-  "module": "./dist/index.esm.js",
+  "main": "./index.js",
+  "module": "./index.esm.js",
   "browser": {
-    "./dist/index.js": "./dist/index.browser.js",
-    "./dist/index.esm.js": "./dist/index.browser.esm.js"
+    "./index.js": "./index.browser.js",
+    "./index.esm.js": "./index.browser.esm.js"
   },
-  "types": "./types/index.d.ts",
+  "types": "./index.d.ts",
   "author": {
     "name": "Hadeeb Farhan",
     "email": "hadeebfarhan1@gmail.com"
   },
   "license": "MIT",
   "sideEffects": false,
-  "files": [
-    "dist",
-    "types"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/hadeeb/react-lazy-hydration.git"
