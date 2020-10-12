@@ -37,7 +37,7 @@
   "scripts": {
     "prebuild": "rimraf dist types",
     "build": "rollup -c",
-    "postbuild": "tsc",
+    "postbuild": "tsc && cp -v ./dist/* . && cp -v ./types/* .",
     "prepublishOnly": "yarn build",
     "lint": "eslint src/** --fix"
   },
